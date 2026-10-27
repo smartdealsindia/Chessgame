@@ -1,0 +1,273 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Classic Chess - Windows 7 Style</title>
+<style>
+*{box-sizing:border-box}
+body{
+ margin:0;font-family:Segoe UI,Tahoma,Arial,sans-serif;
+ background:linear-gradient(135deg,#8bc9e8,#d7effb 45%,#6ba5cb);
+ color:#17324b;min-height:100vh;padding:12px;
+}
+.window{
+ max-width:1050px;margin:12px auto;
+ border:1px solid #fff;border-radius:9px;overflow:hidden;
+ background:rgba(235,247,255,.88);
+ box-shadow:0 12px 40px #204b6b66, inset 0 0 0 1px #77b6df;
+}
+.titlebar{
+ padding:13px 16px;background:linear-gradient(#f5fbffdd,#8ec8e9dd);
+ border-bottom:1px solid #6ca6c8;display:flex;
+ align-items:center;justify-content:space-between;gap:10px;
+}
+.titlebar strong{font-size:19px;text-shadow:0 1px white}
+.winbtn{border:1px solid #fff;border-radius:4px;padding:3px 12px;
+ background:linear-gradient(#effaff,#9bcbe5);color:#183b58}
+.menu{padding:9px 15px;background:#f4faff;border-bottom:1px solid #b6d2e3}
+.menu span{margin-right:22px;font-size:13px}
+.content{display:grid;grid-template-columns:minmax(0,1fr) 245px;gap:16px;padding:18px}
+.board-wrap{width:100%;max-width:620px;margin:auto}
+.board{
+ display:grid;grid-template-columns:repeat(8,1fr);
+ aspect-ratio:1;border:8px solid #704522;border-radius:4px;
+ box-shadow:0 8px 16px #172d3b55, inset 0 0 0 2px #e8c38b;
+ overflow:hidden;touch-action:manipulation;
+}
+.square{
+ position:relative;display:flex;align-items:center;justify-content:center;
+ border:0;padding:0;min-width:0;aspect-ratio:1;
+ cursor:pointer;font-family:"Segoe UI Symbol","DejaVu Sans",serif;
+}
+.light{background:linear-gradient(135deg,#f5dfb7,#d5b27e)}
+.dark{background:linear-gradient(135deg,#a66b3c,#704323)}
+.square.selected{box-shadow:inset 0 0 0 4px #f7e650}
+.square.last{background-image:linear-gradient(#f5e66a77,#f5e66a77)}
+.square .piece{
+ font-size:clamp(22px,6.2vw,58px);line-height:1;
+ filter:drop-shadow(1px 3px 1px #0005);
+ user-select:none;pointer-events:none;
+}
+.white-piece{color:#fffaf0;text-shadow:-1px -1px #503c2b,1px 2px #4c3724,0 0 3px #fff}
+.black-piece{color:#27221d;text-shadow:-1px -1px #fff5,1px 2px #fff4}
+.coord{position:absolute;font:10px Arial;left:3px;top:2px;opacity:.8}
+.dot{position:absolute;width:25%;height:25%;border-radius:50%;
+ background:#226b3a99;pointer-events:none}
+.capture{position:absolute;inset:3px;border:4px solid #2a713b99;
+ border-radius:50%;pointer-events:none}
+.side h3{margin:0 0 12px;font-size:17px}
+.panel{
+ background:linear-gradient(#fff,#e0eff8);border:1px solid #adcada;
+ border-radius:6px;padding:13px;margin-bottom:12px;
+ box-shadow:0 2px 5px #42657a18;
+}
+.status{font-weight:600;min-height:42px;line-height:1.45}
+.buttons{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+button.action{
+ border:1px solid #83b1cd;border-radius:4px;padding:10px 5px;
+ background:linear-gradient(#fff,#c6e2f3);color:#193d58;cursor:pointer;
+ box-shadow:inset 0 1px white;
+}
+button.action:active{background:#9cc7e0}
+button:focus-visible{outline:2px solid #195d9a;outline-offset:2px}
+.moves{max-height:240px;overflow:auto;font:13px Consolas,monospace;line-height:1.9}
+.moves span{display:inline-block;min-width:49%;padding:0 3px}
+.moves .current{background:#ffe58a;border-radius:3px}
+.small{font-size:12px;color:#506c7e;line-height:1.6}
+select{padding:8px;max-width:100%;border:1px solid #a8c6d8;border-radius:4px}
+.footer{padding:10px 16px;background:#e9f5fc;border-top:1px solid #bad6e5;font-size:12px}
+#promotion{display:none;margin-top:10px}
+#promotion button{font-size:25px;min-width:45px}
+@media(max-width:700px){
+ body{padding:4px}
+ .window{margin:4px auto}
+ .content{grid-template-columns:1fr;padding:10px;gap:12px}
+ .side{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+ .side h3{grid-column:1/-1}
+ .panel{margin:0;padding:10px}
+ .board{border-width:5px}
+ .menu span{margin-right:12px}
+ .titlebar strong{font-size:16px}
+ .square .piece{font-size:clamp(22px,9vw,48px)}
+}
+</style>
+</head>
+<body>
+<div class="window">
+ <div class="titlebar">
+  <strong>♟ Classic Chess</strong>
+  <span class="winbtn">Aero</span>
+ </div>
+ <div class="menu"><span>Game</span><span>Board</span><span>Help</span></div>
+ <div class="content">
+  <div class="board-wrap">
+   <div id="board" class="board" aria-label="Chess board"></div>
+   <div id="promotion" class="panel">
+    <b>Choose promotion:</b>
+    <div id="promos" class="buttons" style="margin-top:8px"></div>
+   </div>
+  </div>
+  <aside class="side">
+   <h3>Chess Titans Style</h3>
+   <div class="panel">
+    <div class="small">GAME STATUS</div>
+    <div id="status" class="status">Loading chess...</div>
+    <div class="small" id="turn">White to move</div>
+   </div>
+   <div class="panel">
+    <b>Game controls</b>
+    <div class="buttons" style="margin-top:10px">
+     <button class="action" id="new">↻ New Game</button>
+     <button class="action" id="undo">↶ Undo</button>
+     <button class="action" id="flip">⇅ Flip Board</button>
+     <button class="action" id="hint">♟ Hint</button>
+    </div>
+    <p class="small">Tap a piece, then tap its destination. Green dots show legal moves.</p>
+   </div>
+   <div class="panel">
+    <b>Move history</b>
+    <div id="moves" class="moves">No moves yet.</div>
+   </div>
+  </aside>
+ </div>
+ <div class="footer">Classic Chess · Windows 7 inspired design · Made for desktop and mobile</div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/chess.js/0.10.3/chess.min.js"></script>
+<script>
+(function(){
+ const boardEl=document.getElementById('board');
+ const statusEl=document.getElementById('status');
+ const turnEl=document.getElementById('turn');
+ const movesEl=document.getElementById('moves');
+ const promotionEl=document.getElementById('promotion');
+ const promosEl=document.getElementById('promos');
+ const glyph={
+  wk:'♔',wq:'♕',wr:'♖',wb:'♗',wn:'♘',wp:'♙',
+  bk:'♚',bq:'♛',br:'♜',bb:'♝',bn:'♞',bp:'♟︎'
+ };
+ let game=new Chess(),selected=null,targets=[],flipped=false,last=null;
+ let pending=null;
+ function pieceName(p){return p.color+(p.type||'');}
+ function legalFrom(sq){return game.moves({square:sq,verbose:true});}
+ function endText(){
+  if(game.in_checkmate())return 'Checkmate! '+(game.turn()==='w'?'Black':'White')+' wins.';
+  if(game.in_stalemate())return 'Draw by stalemate.';
+  if(game.in_draw())return 'Game drawn.';
+  if(game.in_check())return (game.turn()==='w'?'White':'Black')+' is in check!';
+  return (game.turn()==='w'?'White':'Black')+' to move';
+ }
+ function render(){
+  boardEl.innerHTML='';
+  const files=flipped?'hgfedcba':'abcdefgh';
+  const ranks=flipped?[1,2,3,4,5,6,7,8]:[8,7,6,5,4,3,2,1];
+  const lm=game.history({verbose:true}).slice(-1)[0];
+  last=lm?{from:lm.from,to:lm.to}:null;
+  for(const rank of ranks)for(const file of files){
+   const sq=file+rank,p=game.get(sq);
+   const b=document.createElement('button');
+   b.className='square '+(((file.charCodeAt(0)-97+rank)%2===0)?'light':'dark');
+   b.setAttribute('aria-label',sq+(p?' '+p.color+' '+p.type:' empty'));
+   if(selected===sq)b.classList.add('selected');
+   if(last&&(last.from===sq||last.to===sq))b.classList.add('last');
+   if((file==='a'&&rank===(flipped?1:8))||(file===(flipped?'h':'a')&&rank===(flipped?1:8))){
+    const c=document.createElement('span');c.className='coord';c.textContent=rank;b.appendChild(c);
+   }
+   if(rank===(flipped?8:1)){
+    const c=document.createElement('span');c.className='coord';c.style.left='auto';c.style.right='3px';c.style.top='auto';c.style.bottom='2px';c.textContent=file;b.appendChild(c);
+   }
+   if(p){
+    const piece=document.createElement('span');
+    piece.className='piece '+(p.color==='w'?'white-piece':'black-piece');
+    piece.textContent=glyph[pieceName(p)]||'';
+    b.appendChild(piece);
+   }
+   if(targets.includes(sq)){
+    const mark=document.createElement('span');
+    mark.className=p?'capture':'dot';b.appendChild(mark);
+   }
+   b.addEventListener('click',()=>clickSquare(sq));
+   boardEl.appendChild(b);
+  }
+  statusEl.textContent=endText();
+  turnEl.textContent='Turn: '+(game.turn()==='w'?'White':'Black')+
+   '  |  Move '+game.move_number();
+  renderMoves();
+ }
+ function renderMoves(){
+  const hs=game.history();
+  if(!hs.length){movesEl.textContent='No moves yet.';return;}
+  movesEl.innerHTML='';
+  for(let i=0;i<hs.length;i+=2){
+   const line=document.createElement('div');
+   const n=document.createElement('span');
+   n.textContent=(Math.floor(i/2)+1)+'. ';
+   const w=document.createElement('span');
+   w.textContent=hs[i]||'';
+   const b=document.createElement('span');
+   b.textContent=hs[i+1]||'';
+   line.append(n,w,b);movesEl.appendChild(line);
+  }
+  movesEl.scrollTop=movesEl.scrollHeight;
+ }
+ function clickSquare(sq){
+  if(game.game_over()||pending)return;
+  const p=game.get(sq);
+  if(selected===sq){selected=null;targets=[];render();return;}
+  if(selected&&targets.includes(sq)){
+   const opts=legalFrom(selected).filter(m=>m.to===sq);
+   if(opts.some(m=>m.flags.includes('p'))){
+    showPromotion(selected,sq);return;
+   }
+   doMove(selected,sq);return;
+  }
+  if(p&&p.color===game.turn()){
+   selected=sq;targets=legalFrom(sq).map(m=>m.to);render();
+  }else{
+   selected=null;targets=[];render();
+  }
+ }
+ function showPromotion(from,to){
+  pending={from,to};promosEl.innerHTML='';
+  ['q','r','b','n'].forEach(type=>{
+   const btn=document.createElement('button');
+   btn.className='action';btn.textContent=glyph[game.turn()+type];
+   btn.title=({q:'Queen',r:'Rook',b:'Bishop',n:'Knight'})[type];
+   btn.onclick=()=>{const x=pending;pending=null;promotionEl.style.display='none';doMove(x.from,x.to,type);};
+   promosEl.appendChild(btn);
+  });
+  promotionEl.style.display='block';
+ }
+ function doMove(from,to,promotion){
+  try{
+   const move=game.move({from,to,promotion:promotion||'q'});
+   if(!move)return;
+   selected=null;targets=[];pending=null;promotionEl.style.display='none';render();
+  }catch(e){selected=null;targets=[];render();}
+ }
+ document.getElementById('new').onclick=()=>{
+  game.reset();selected=null;targets=[];pending=null;promotionEl.style.display='none';render();
+ };
+ document.getElementById('undo').onclick=()=>{
+  if(game.history().length)game.undo();
+  selected=null;targets=[];pending=null;promotionEl.style.display='none';render();
+ };
+ document.getElementById('flip').onclick=()=>{flipped=!flipped;render();};
+ document.getElementById('hint').onclick=()=>{
+  if(game.game_over())return;
+  const all=game.moves({verbose:true});
+  if(!all.length)return;
+  const m=all[Math.floor(Math.random()*all.length)];
+  selected=m.from;targets=[m.to];render();
+  statusEl.textContent='Try: '+m.san+' ('+m.from+' to '+m.to+')';
+ };
+ if(typeof Chess==='undefined'){
+  statusEl.textContent='Could not load chess rules. Check your internet connection and reload.';
+  document.getElementById('hint').disabled=true;
+ }else render();
+})();
+</script>
+</body>
+</html>
